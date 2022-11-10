@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 // 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db,0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB,1000000000000000000,2000000000000000000
 contract BetCzar {
-    //TODO emit events
+    //TODO deposits of ERC20 or other tokens instead of just ETH
     enum BetStatus {
         CREATED, WAITING_FOR1, WAITING_FOR2, PENDING, 
         WON1, WON2, CLAIMED1, CLAIMED2, CANCELED, CLAIMED_REFUND1, 
@@ -105,7 +105,7 @@ contract BetCzar {
             }
             amt = bet.amt2;
         } else {
-            revert("not a bettor"); //skip or replace with error
+            revert("not a bettor"); //TODO skip or replace with error?
         }
         //first change status 
         bets[betId].status = BetStatus.CREATED;
@@ -179,6 +179,11 @@ contract BetCzar {
             emit BetStatusChange(betId, BetStatus.CLAIMED2);
 
         } else if (bet.status == BetStatus.CANCELED) {
+            //TODO!! EVEN THOUGH I DON'T REVERT IF THE FIRST TRANSFER FAILS, IT'S STILL POSSIBLE
+            //THAT THE REFUND TO SECOND BETTOR WILL BE BLOCKED - E.G. IF THE FIRST 
+            //REFUND RUNS OUT OF GAS, SO WE NEED ANOTHER FUNCTION TO JUST REFUND THE SECOND BETTOR
+            //AND VICE VERSA, SO WE NEED ANOTHER FUNCTION TO JUST REFUND THE FIRST BETTOR  
+
             //refund bettors their amounts
             //in case one bettor can't accept funds for some reason still send
             //refund to the other and set a special status
@@ -235,5 +240,29 @@ contract BetCzar {
         } else {
             revert InvalidStatus();
         }
+    }
+
+    function sendRefund1(uint betId) external {
+        //Fallback method for a CANCELED bet in case one bettor blocks the other 
+        Bet memory bet = getBet(betId);
+        if (bet.status != BetStatus.CANCELED) {
+            revert InvalidStatus();
+        }
+        bets[betId].status = BetStatus.CLAIMED_REFUND1;
+        (bool success,) = bet.bettor1.call{value: bet.amt1}("");
+        require(success, "send failed");
+        emit BetStatusChange(betId, BetStatus.CLAIMED_REFUND1);
+    }
+
+    function sendRefund2(uint betId) external {
+        //Fallback method for a CANCELED bet in case one bettor blocks the other 
+        Bet memory bet = getBet(betId);
+        if (bet.status != BetStatus.CANCELED) {
+            revert InvalidStatus();
+        }
+        bets[betId].status = BetStatus.CLAIMED_REFUND2;
+        (bool success,) = bet.bettor2.call{value: bet.amt2}("");
+        require(success, "send failed");
+        emit BetStatusChange(betId, BetStatus.CLAIMED_REFUND2);
     }
 }
