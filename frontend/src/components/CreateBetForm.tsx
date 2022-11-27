@@ -6,9 +6,9 @@ import { useState } from "react";
 
 import { validateAddr, validateAmt } from "../utils/utils";
 import {
+  CreateBetFormInitVals,
   CreateBetFormPropsT,
   CreateBetFormValsT,
-  initVals,
 } from "./interfaces";
 //import * as Yup from 'yup';
 
@@ -59,7 +59,7 @@ export const CreateBetForm = (props: CreateBetFormPropsT) => {
   See resetForm entry in https://formik.org/docs/api/formik#onsubmit-values-values-formikbag-formikbag--void--promiseany */
   return (
     <Formik<CreateBetFormValsT>
-      initialValues={initVals}
+      initialValues={CreateBetFormInitVals}
       validate={validate}
       onSubmit={(values, actions) => {
         /*setTimeout(() => {
@@ -179,7 +179,11 @@ export const CreateBetForm = (props: CreateBetFormPropsT) => {
               />
             </Stack>
             <Stack direction="row" justifyContent="left">
-              <Button variant="contained" type="submit">
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={props.isDisabled}
+              >
                 Create bet
               </Button>
             </Stack>

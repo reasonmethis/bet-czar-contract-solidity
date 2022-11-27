@@ -1,21 +1,27 @@
 import { ethers } from "ethers";
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import Button from "@mui/material/Button";
-import Container from "@mui/material/Container";
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
+  RouterProvider,
+} from "react-router-dom";
+
 import Header from "./components/Header";
+import { Home } from "./components/Home";
 
 import "./App.css";
 import { CreateBetForm } from "./components/CreateBetForm";
+import { Deposit } from "./components/Deposit";
 import { CreateBetFormValsT } from "./components/interfaces";
-import { NoWallet } from "./components/NoWallet";
 import { Action, stateInit, stateReducer } from "./StateReducer";
 
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "./contracts/BetCzar.json";
 import contractAddress from "./contracts/contract-address.json";
 
-const DT_POLLING_IN_MS = 100000;
+const DT_POLLING_IN_MS = 20000;
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
@@ -28,6 +34,14 @@ const ERR_ST_TX_REJECTED_BY_USER = "Transaction was rejected by user";
 declare let window: any; //without this Typescript complains that window doesn't have
 //attr ethereum. There are probably better approaches (maybe ones in https://stackoverflow.com/questions/70961190/property-ethereum-does-not-exist-on-type-window-typeof-globalthis-error), but
 //this one seems to work. It's taken from https://dev.to/yakult/a-beginers-guide-four-ways-to-play-with-ethersjs-354a
+
+/*
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => router.dispose());
+}
+*/
+const Fallback = () => <h2>Loading BetCzar...</h2>;
+
 function App() {
   const [state, dispatchState] = useReducer(stateReducer, stateInit);
   const pollDataIntervalRef = useRef<NodeJS.Timer | undefined>();
@@ -65,15 +79,28 @@ function App() {
   const updateBalance = async () => {
     //force ts to accept provider. We don't need to check it above
     //because if address is defined then provider is defined too -
-    //they reset together. Force address to be accepted since we check it
-    //above
-    const balance = await state.provider!.getBalance(state.address!);
+    //they reset together.
+    if (!state.address) return;
+    const balance = await state.provider!.getBalance(state.address);
     //setFetchingFlg(false);
-    console.log(balance);
+    console.log(balance.toString());
     dispatchState({
       type: Action.SET_BALANCE,
       payload: ethers.utils.formatEther(balance),
     });
+
+    //get events associated with user's address
+    const betCzar = getContractInstance();
+    const filter1 = betCzar.filters.BetCreated(null, state.address, null, null);
+    const filter2 = betCzar.filters.BetCreated(null, null, state.address, null);
+    const filter3 = betCzar.filters.BetCreated(null, null, null, state.address);
+    const promises = [filter1, filter2, filter3].map((f) =>
+      betCzar.queryFilter(f)
+    );
+    const events = await Promise.all(promises);
+    console.log(events);
+    //save events in state
+    dispatchState({ type: Action.SET_ALL_BETS, payload: events });
   };
 
   // This method checks if Metamask selected network is Localhost:8545
@@ -180,23 +207,18 @@ function App() {
     });
   };
 
-  const getContractInstance = () => new ethers.Contract(
-    contractAddress.BetCzar,
-    BetCzarArtifact.abi,
-    state.provider!.getSigner()
-  );
-
-  const getEvents = () => {
-    //https://docs.ethers.io/v5/concepts/events/#events
-   const betCzar = getContractInstance() 
-
-  }
+  const getContractInstance = () =>
+    new ethers.Contract(
+      contractAddress.BetCzar,
+      BetCzarArtifact.abi,
+      state.provider!.getSigner()
+    );
 
   const makeCreateBetTxPromise = (
     vals: CreateBetFormValsT
   ): Promise<ethers.providers.TransactionResponse> => {
     // We initialize the contract using the provider and the token's artifact.
-    const betCzar = getContractInstance()
+    const betCzar = getContractInstance();
     //https://docs.ethers.io/v5/api/utils/display-logic/#unit-conversion
     const amt1 = ethers.utils.parseUnits(vals.amt1, "ether");
     const amt2 = ethers.utils.parseUnits(vals.amt2, "ether");
@@ -249,8 +271,8 @@ function App() {
       }
 
       // If we got here, the transaction was successful, so you may want to
-      // update your state. 
-      console.log("Tx successful")
+      // update your state.
+      console.log("Tx successful");
     } catch (error) {
       // We check the error code to see if this error was produced because the
       // user rejected a tx. If that's the case, we do nothing.
@@ -281,57 +303,67 @@ function App() {
     return error.message;
   };
 
+  //We define the route structure
+  let router = createBrowserRouter(
+    createRoutesFromElements(
+      <Route
+        path="/"
+        element={<Header state={state} connectWallet={connectWallet} />}
+      >
+        {/* <Route index loader={homeLoader} element={<Home />} />  */}
+        <Route index element={<Home state={state} />} />
+        <Route
+          path="newbet"
+          element={
+            <CreateBetForm
+              isDisabled={!state.address}
+              onSubmit={(vals) => {
+                sendtx(makeCreateBetTxPromise(vals));
+              }}
+            />
+          }
+        />
+        <Route
+          path="deposit"
+          element={
+            <Deposit
+              state={state}
+              onSubmit={(vals) => {
+                //sendtx(makeCreateBetTxPromise(vals));
+              }}
+            />
+          }
+        />{" "}
+        {/* <Route path="deferred" loader={deferredLoader} element={<DeferredPage />}>
+          <Route
+            path="child"
+            loader={deferredChildLoader}
+            action={deferredChildAction}
+            element={<DeferredChild />}
+          />
+        </Route> 
+        <Route
+          path="todos"
+          action={todosAction}
+          loader={todosLoader}
+          element={<TodosList />}
+          errorElement={<TodosBoundary />}
+        >
+          <Route path=":id" loader={todoLoader} element={<Todo />} />
+        </Route> */}
+      </Route>
+    )
+  );
   //We render the Dapp
-  if (!window.ethereum) {
+  return <RouterProvider router={router} />;
+  /*if (!window.ethereum) {
     return (
       <>
         <Header />
         <NoWallet />
       </>
     );
-  }
-  const connectBtn = (
-    <>
-      <Button
-        variant="contained"
-        onClick={() => {
-          connectWallet();
-        }}
-      >
-        Connect
-      </Button>
-      {/*<Button
-        variant="outlined"
-        onClick={() => {
-          setInterval(() => setFetchingFlg(true), 2500);
-        }}
-      >
-        Test
-      </Button> */}
-    </>
-  );
-  return (
-    <>
-      <Header />
-      <Container maxWidth="md">
-        <h1>Welcome to BetCzar</h1>
-        {state.address ? (
-          <>
-            {/*<h3>test: {!!state.provider ? "have provider" : "no provider"}</h3>*/}
-            <h3>Address: {state.address}</h3>
-            <h3>Balance: {state.balance ?? "Fetching..."}</h3>
-            <CreateBetForm
-              onSubmit={(vals) => {
-                sendtx(makeCreateBetTxPromise(vals));
-              }}
-            ></CreateBetForm>
-          </>
-        ) : (
-          connectBtn
-        )}
-      </Container>
-    </>
-  );
+  } */
 }
 
 export default App;

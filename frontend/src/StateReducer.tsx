@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { AllBetsT } from "./components/interfaces";
 
 export enum Action {
   RESET,
@@ -8,6 +9,7 @@ export enum Action {
   SET_BALANCE,
   SET_TX_BEINGSENT,
   SET_TX_ERR,
+  SET_ALL_BETS,
 }
 
 //Different actions have different payload types, so to strongly type
@@ -33,10 +35,16 @@ type TActionSetProvider = {
   payload: ethers.providers.Web3Provider | undefined;
 };
 
+type TActionSetAllBets = {
+  type: Action.SET_ALL_BETS;
+  payload: AllBetsT | undefined;
+};
+
 export type TAction =
   | TActionReset
   | TActionSetStringProperty
-  | TActionSetProvider;
+  | TActionSetProvider
+  | TActionSetAllBets;
 // {
 //   type: Action;
 //   payload: any;
@@ -49,6 +57,7 @@ export interface IState {
   provider: ethers.providers.Web3Provider | undefined;
   txBeingSent: string | undefined;
   txError: string | undefined;
+  allBets: AllBetsT | undefined;
 }
 
 export const stateInit: IState = {
@@ -58,6 +67,7 @@ export const stateInit: IState = {
   provider: undefined,
   txBeingSent: undefined,
   txError: undefined,
+  allBets: undefined,
 };
 
 export const stateReducer = (state: IState, action: TAction): IState => {
@@ -78,6 +88,8 @@ export const stateReducer = (state: IState, action: TAction): IState => {
       return { ...state, txBeingSent: action.payload };
     case Action.SET_TX_ERR:
       return { ...state, txError: action.payload };
+    case Action.SET_ALL_BETS:
+      return { ...state, allBets: action.payload };
     default:
       return state;
   }
