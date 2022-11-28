@@ -26,6 +26,7 @@ import { styled } from "@mui/material/styles"; //VS code suggests from "@mui/mat
 //I am following docs: https://mui.com/material-ui/customization/how-to-customize/
 
 import { IState } from "../StateReducer";
+import { roundAmt, shortenHash } from "../utils/utils";
 
 const darkTheme = createTheme({
   palette: {
@@ -148,14 +149,14 @@ export default function NavNormalAndHamburger({
       <Container maxWidth="md" sx={{ marginTop: "16px" }}>
         {state.address ? (
           <Box marginBottom="16px">
-            <Typography variant="subtitle1" >Address: {state.address}</Typography>
+            <Typography variant="subtitle1" >Address: {shortenHash(state.address)}</Typography>
             <Typography variant="body2" color="text.secondary">
-              Balance: {state.balance ?? "Fetching..."}
+              Balance: {state.balance === undefined ? "Fetching...": roundAmt(state.balance, 4) + " ETH"} 
             </Typography>
           </Box>
         ) : (
           <Box marginBottom="16px">
-            <Typography variant="h6">
+            <Typography variant="subtitle1">
               Please connect your wallet to interact with this Dapp
             </Typography>
             <Button

@@ -26,6 +26,18 @@ export type DepositPropsT = {
   onSubmit: (vals: DepositValsT) => void;
 };
 
+export type WithdrawValsT = {
+  betId: string;
+  isBettor1: boolean;
+  isWon: boolean //then use sendWinnings 
+  isCancelled: boolean //then sendRefund1/2, else recallDeposit
+};
+
+export type WithdrawPropsT = {
+  state: IState;
+  onSubmit: (vals: WithdrawValsT) => void;
+};
+
 export const SelectBetFormInitVals = {
   betId: "",
 };

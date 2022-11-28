@@ -18,7 +18,12 @@ import { CreateBetForm } from "./components/CreateBetForm";
 import { Deposit } from "./components/Deposit";
 import Header from "./components/Header";
 import { Home } from "./components/Home";
-import { CreateBetFormValsT, DepositValsT } from "./components/interfaces";
+import {
+  CreateBetFormValsT,
+  DepositValsT,
+  WithdrawValsT,
+} from "./components/interfaces";
+import { Withdraw } from "./components/Withdraw";
 
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "./contracts/BetCzar.json";
@@ -247,6 +252,17 @@ function App() {
     return betCzar.deposit2(+vals.betId, { value: vals.amt });
   };
 
+  const makeWithdrawTxPromise = (
+    vals: WithdrawValsT
+  ): Promise<ethers.providers.TransactionResponse> => {
+    // We initialize the contract using the provider and the token's artifact.
+    const betCzar = getContractInstance();
+    if (vals.isWon) return betCzar.sendWinnings(+vals.betId);
+    if (!vals.isCancelled) return betCzar.recallDeposit(+vals.betId);
+    if (vals.isBettor1) return betCzar.sendRefund1(+vals.betId);
+    return betCzar.sendRefund2(+vals.betId);
+  };
+
   const sendTx = async (
     txPromise: Promise<ethers.providers.TransactionResponse>
   ) => {
@@ -362,6 +378,28 @@ function App() {
             />
           }
         />
+        <Route
+          path="withdraw"
+          element={
+            <Withdraw
+              state={state}
+              onSubmit={(vals) => {
+                sendTx(makeWithdrawTxPromise(vals));
+              }}
+            />
+          }
+        />{" "}
+        <Route
+          path="judge"
+          element={
+            <Deposit
+              state={state}
+              onSubmit={(vals) => {
+                sendTx(makeDepositTxPromise(vals));
+              }}
+            />
+          }
+        />{" "}
         {/* <Route path="deferred" loader={deferredLoader} element={<DeferredPage />}>
           <Route
             path="child"
