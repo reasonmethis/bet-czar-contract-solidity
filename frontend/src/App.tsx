@@ -8,20 +8,24 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-import Header from "./components/Header";
-import { Home } from "./components/Home";
+import { useSnackbar } from "notistack";
 
 import "./App.css";
+import { Action, stateInit, stateReducer } from "./StateReducer";
+import { shortenHash } from "./utils/utils";
+
 import { CreateBetForm } from "./components/CreateBetForm";
 import { Deposit } from "./components/Deposit";
-import { CreateBetFormValsT } from "./components/interfaces";
-import { Action, stateInit, stateReducer } from "./StateReducer";
+import Header from "./components/Header";
+import { Home } from "./components/Home";
+import { CreateBetFormValsT, DepositValsT } from "./components/interfaces";
 
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "./contracts/BetCzar.json";
 import contractAddress from "./contracts/contract-address.json";
 
 const DT_POLLING_IN_MS = 20000;
+const DUR_SNACKBAR = 15000;
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
@@ -46,6 +50,8 @@ function App() {
   const [state, dispatchState] = useReducer(stateReducer, stateInit);
   const pollDataIntervalRef = useRef<NodeJS.Timer | undefined>();
   const [fetchingFlg, setFetchingFlg] = useState(false);
+
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   useEffect(() => {
     //we update balance only when fetchingFlg (a) changes (b) from false to true
@@ -231,7 +237,17 @@ function App() {
     );
   };
 
-  const sendtx = async (
+  const makeDepositTxPromise = (
+    vals: DepositValsT
+  ): Promise<ethers.providers.TransactionResponse> => {
+    // We initialize the contract using the provider and the token's artifact.
+    const betCzar = getContractInstance();
+    if (vals.isBettor1)
+      return betCzar.deposit1(+vals.betId, { value: vals.amt });
+    return betCzar.deposit2(+vals.betId, { value: vals.amt });
+  };
+
+  const sendTx = async (
     txPromise: Promise<ethers.providers.TransactionResponse>
   ) => {
     // Sending a transaction is a complex operation:
@@ -255,6 +271,10 @@ function App() {
       // way we can indicate that we are waiting for it to be mined.
       //sgnr = state.provider.sendTransaction
       const tx = await txPromise;
+      const hashShort = shortenHash(tx.hash);
+      enqueueSnackbar(`Tx ${hashShort} processing`, {
+        autoHideDuration: DUR_SNACKBAR,
+      });
       console.log(tx.hash);
       dispatchState({ type: Action.SET_TX_BEINGSENT, payload: tx.hash });
 
@@ -267,11 +287,19 @@ function App() {
       if (receipt.status === 0) {
         // We can't know the exact error that made the transaction fail when it
         // was mined, so we throw this generic one.
+        enqueueSnackbar(`Tx ${hashShort} failed`, {
+          autoHideDuration: DUR_SNACKBAR,
+          variant: "error",
+        });
         throw new Error("Transaction failed");
       }
 
       // If we got here, the transaction was successful, so you may want to
       // update your state.
+      enqueueSnackbar(`Tx ${hashShort} complete`, {
+        autoHideDuration: DUR_SNACKBAR,
+        variant: "success",
+      });
       console.log("Tx successful");
     } catch (error) {
       // We check the error code to see if this error was produced because the
@@ -318,7 +346,7 @@ function App() {
             <CreateBetForm
               isDisabled={!state.address}
               onSubmit={(vals) => {
-                sendtx(makeCreateBetTxPromise(vals));
+                sendTx(makeCreateBetTxPromise(vals));
               }}
             />
           }
@@ -329,11 +357,11 @@ function App() {
             <Deposit
               state={state}
               onSubmit={(vals) => {
-                //sendtx(makeCreateBetTxPromise(vals));
+                sendTx(makeDepositTxPromise(vals));
               }}
             />
           }
-        />{" "}
+        />
         {/* <Route path="deferred" loader={deferredLoader} element={<DeferredPage />}>
           <Route
             path="child"

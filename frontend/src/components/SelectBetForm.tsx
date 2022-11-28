@@ -1,6 +1,8 @@
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { Formik, FormikErrors } from "formik";
 import { useState } from "react";
 
@@ -12,7 +14,9 @@ import {
 } from "./interfaces";
 //import * as Yup from 'yup';
 
-const validate = (values: SelectBetFormValsT): FormikErrors<SelectBetFormValsT> => {
+const validate = (
+  values: SelectBetFormValsT
+): FormikErrors<SelectBetFormValsT> => {
   const errors = {} as FormikErrors<SelectBetFormValsT>;
 
   if (!values.betId) {
@@ -51,20 +55,28 @@ export const SelectBetForm = (props: SelectBetFormPropsT) => {
             formik.handleSubmit(e);
           }}
         >
+          <Typography variant="subtitle1" textAlign="center" marginBottom="16px">
+            Please select the bet id
+          </Typography>
           <Stack gap="0px">
             <Stack
               direction="row"
               flexWrap="wrap"
-              sx={{ gridColumnGap: "8px" }}
+              justifyContent="center"
+              alignItems="baseline"
+              sx={{ gridColumnGap: "32px" }}
             >
               <TextField
                 id="betId"
                 name="betId" //name must match field name (as in formik.errors.betId
                 label="Bet Id"
                 //have to target a subcomponent to set the width of the input box,
-                //because if I set the overall width instead then error messages 
+                //because if I set the overall width instead then error messages
                 //won't fit in one line
-                sx={{  maxWidth: "100%", "& .MuiInputBase-root": {maxWidth:"10ch"}}}
+                sx={{
+                  maxWidth: "100%",
+                  "& .MuiInputBase-root": { maxWidth: "10ch" },
+                }}
                 value={formik.values.betId}
                 onChange={formik.handleChange}
                 error={showErrs && Boolean(formik.errors.betId)}
@@ -74,17 +86,14 @@ export const SelectBetForm = (props: SelectBetFormPropsT) => {
                     : " "
                 }
               />
+              <Box>
+                <Button type="submit" disabled={props.isDisabled}>
+                  Select
+                </Button>
+              </Box>
             </Stack>
 
-            <Stack direction="row" justifyContent="left">
-              <Button
-                variant="outlined"
-                type="submit"
-                disabled={props.isDisabled}
-              >
-                Select
-              </Button>
-            </Stack>
+            <Stack direction="row" justifyContent="left"></Stack>
           </Stack>
         </form>
       )}

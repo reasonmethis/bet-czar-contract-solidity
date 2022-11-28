@@ -30,3 +30,7 @@ export const validateUint = (numStr: string): string | undefined => {
     }
 }
 export const sleep = async (delay: number) => new Promise((r) => setTimeout(r, delay))
+
+export const shortenHash = (st: string) => {
+    return st.slice(0, 4) + "..." + st.slice(st.length - 4)
+}

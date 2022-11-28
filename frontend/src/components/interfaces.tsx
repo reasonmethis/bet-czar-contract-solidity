@@ -18,6 +18,7 @@ export type CreateBetFormPropsT = {
 export type DepositValsT = {
   betId: string;
   isBettor1: boolean;
+  amt: string;
 };
 
 export type DepositPropsT = {
@@ -37,6 +38,22 @@ export type SelectBetFormPropsT = {
 
 export type AllBetsT = ethers.Event[][];
 
+export const betStatusDescriptions = [
+  "New bet, waiting for bettors' deposits",
+  "Waiting for Bettor 1's deposit",
+  "Waiting for Bettor 2's deposit",
+  "Bet in progress, waiting for judgement or forfeiture",
+  "Bettor 1 won, can claim winnings",
+  "Bettor 2 won, can claim winnings",
+  "Bet complete, Bettor 1 claimed winnings",
+  "Bet complete, Bettor 2 claimed winnings",
+  "Bet cancelled by Judge, bettors can withdraw deposits",
+  "Bet cancelled by Judge, Bettor 1 withdrew deposit",
+  "Bet cancelled by Judge, Bettor 2 withdrew deposit",
+  "Bet cancelled by Judge, bettors withdrew deposits",
+  "Unknown status",
+];
+
 export enum BetStatus {
   CREATED = 0,
   WAITING_FOR1,
@@ -50,12 +67,33 @@ export enum BetStatus {
   CLAIMED_REFUND1,
   CLAIMED_REFUND2,
   CLAIMED_REFUNDS,
+  UNKNOWN,
 }
-export type BetInfoT = {
-  bettor1: string;
-  bettor2: string;
-  judge: string;
-  amt1: string;
-  amt2: string;
-  status: BetStatus;
+
+export enum RpcCallErrorStatus {
+  UNDEFINED,
+  NO_ERROR,
+  RPC_ERROR,
+  OTHER_ERROR,
+}
+
+export const RpcCallErrorInitVals = {
+  status: RpcCallErrorStatus.UNDEFINED,
+  msg: "",
 };
+
+export type RpcCallErrorT = typeof RpcCallErrorInitVals;
+
+const tmp = {
+  betId: "",
+  bettor1: "",
+  bettor2: "",
+  judge: "",
+  amt1: "",
+  amt2: "",
+  status: BetStatus.UNKNOWN,
+  error: RpcCallErrorInitVals as Readonly<RpcCallErrorT>,
+};
+
+export type BetInfoT = typeof tmp;
+export const betInfoInitVals: Readonly<BetInfoT> = tmp;
