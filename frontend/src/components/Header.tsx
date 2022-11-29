@@ -156,8 +156,8 @@ export default function NavNormalAndHamburger({
           </Box>
         ) : (
           <Box marginBottom="16px">
-            <Typography variant="subtitle1">
-              Please connect your wallet to interact with this Dapp
+            <Typography variant="subtitle1" sx={{paddingBottom: "8px"}}>
+              Please connect your wallet to create and manage Bets
             </Typography>
             <Button
               variant="contained"

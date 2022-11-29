@@ -9,23 +9,21 @@ import {
   betInfoInitVals,
   BetStatus,
   betStatusDescriptions,
+  JudgePropsT,
   RpcCallErrorStatus,
-  WithdrawPropsT,
 } from "./interfaces";
 import { fetchBetInfo } from "./operations";
-import { PageHeading } from "./PageHeading";
 import { SelectBetForm } from "./SelectBetForm";
+import { PageHeading } from "./PageHeading";
 
 const statusTypographyvariant = "subtitle2";
 
-type WithdrawBtnProps = {
-  is1: boolean;
-  userIsBoth: boolean;
-  isWon: boolean;
-  isCancelled: boolean;
+type JudgeBtnProps = {
+  isJudge: boolean;
+  winner: 0 | 1 | 2;
 };
 
-export const Withdraw = (props: WithdrawPropsT) => {
+export const Judge = (props: JudgePropsT) => {
   const [betInfo, setBetInfo] = useState({ ...betInfoInitVals });
   const [betId, setBetId] = useState(-1);
 
@@ -45,14 +43,9 @@ export const Withdraw = (props: WithdrawPropsT) => {
   }, [betId]);
 
   //console.log("def dep btn, betid = ", betId, "status =", betInfo.status);
-  const WithdrawBtn = ({
-    is1,
-    isCancelled,
-    isWon,
-    userIsBoth,
-  }: WithdrawBtnProps) => {
-    let text = "Withdraw";
-    if (userIsBoth && isCancelled) text += " as Bettor " + (is1 ? "1" : "2");
+  const JudgeBtn = ({ winner, isJudge }: JudgeBtnProps) => {
+    let text = "Annul bet";
+    if (winner) text = "Register Bettor " + winner + "'s win";
 
     return (
       <Button
@@ -60,9 +53,8 @@ export const Withdraw = (props: WithdrawPropsT) => {
         onClick={() => {
           props.onSubmit({
             betId: betInfo.betId,
-            isBettor1: is1,
-            isWon,
-            isCancelled,
+            isJudge,
+            winner,
           });
         }}
       >
@@ -71,17 +63,11 @@ export const Withdraw = (props: WithdrawPropsT) => {
     );
   };
 
-  let [
-    isFetching,
-    isRpcErr,
-    isOtherErr,
-    isFetched,
-    canWithdraw1,
-    canWithdraw2,
-    isCancelled,
-    isWon,
-  ] = [false, false, false, false, false, false, false, false];
+  let [isFetching, isRpcErr, isOtherErr, isFetched, isPending, isAdjudicated] =
+    [false, false, false, false, false, false];
 
+  const isJudge =
+    props.state.address?.toLowerCase() === betInfo.judge.toLowerCase();
   const isBettor1 =
     props.state.address?.toLowerCase() === betInfo.bettor1.toLowerCase();
   const isBettor2 =
@@ -96,29 +82,17 @@ export const Withdraw = (props: WithdrawPropsT) => {
       isOtherErr = true;
     else {
       isFetched = true;
-      canWithdraw1 =
-        isBettor1 &&
-        [
-          BetStatus.WAITING_FOR2,
-          BetStatus.WON1,
-          BetStatus.CANCELED,
-          BetStatus.CLAIMED_REFUND2,
-        ].includes(betInfo.status);
-      console.log(isBettor1, canWithdraw1, betInfo.status);
-      canWithdraw2 =
-        isBettor2 &&
-        [
-          BetStatus.WAITING_FOR1,
-          BetStatus.WON2,
-          BetStatus.CANCELED,
-          BetStatus.CLAIMED_REFUND1,
-        ].includes(betInfo.status);
-      isCancelled = [
+      isPending = betInfo.status === BetStatus.PENDING;
+      isAdjudicated = [
+        BetStatus.WON2,
+        BetStatus.WON1,
+        BetStatus.CLAIMED2,
+        BetStatus.CLAIMED1,
         BetStatus.CANCELED,
         BetStatus.CLAIMED_REFUND1,
         BetStatus.CLAIMED_REFUND2,
+        BetStatus.CLAIMED_REFUNDS,
       ].includes(betInfo.status);
-      isWon = [BetStatus.WON1, BetStatus.WON2].includes(betInfo.status);
     }
 
   return (
@@ -134,7 +108,7 @@ export const Withdraw = (props: WithdrawPropsT) => {
     unmount and the new one to mount, and React wasn't able to see that they are the 
     same. Or something to that effect 
     */}
-      <PageHeading text="Withdrawals"></PageHeading>
+      <PageHeading text="Adjudications and Forfeitures"></PageHeading>
       <SelectBetForm
         isDisabled={!props.state.address}
         onSubmit={(vals) => {
@@ -179,33 +153,19 @@ export const Withdraw = (props: WithdrawPropsT) => {
             sx={{ gridColumnGap: "32px", padding: "16px 0" }}
           >
             <>
-              {canWithdraw1 !== canWithdraw2 && (
-                <WithdrawBtn
-                  is1={canWithdraw1}
-                  isWon={isWon}
-                  isCancelled={isCancelled}
-                  userIsBoth={isBettor1 && isBettor2}
-                />
+              {isPending && !isJudge && isBettor1 != isBettor2 && (
+                <JudgeBtn isJudge={false} winner={isBettor1 ? 2 : 1} />
               )}
-              {canWithdraw1 && canWithdraw2 && (
+              {isPending && isJudge && (
                 <>
-                  <WithdrawBtn
-                    is1={true}
-                    isWon={isWon}
-                    isCancelled={isCancelled}
-                    userIsBoth={isBettor1 && isBettor2}
-                  />
-                  <WithdrawBtn
-                    is1={false}
-                    isWon={isWon}
-                    isCancelled={isCancelled}
-                    userIsBoth={isBettor1 && isBettor2}
-                  />
+                  <JudgeBtn isJudge={true} winner={1} />
+                  <JudgeBtn isJudge={true} winner={2} />
+                  <JudgeBtn isJudge={true} winner={0} />
                 </>
               )}
-              {!canWithdraw1 && !canWithdraw2 && (
+              {(!isPending || (!isJudge && !isBettor1 && !isBettor2)) && (
                 <Typography variant="button" sx={{ color: "error.main" }}>
-                  NOTHING TO WITHDRAW
+                  YOU CANNOT ADJUDICATE THIS BET
                 </Typography>
               )}
             </>

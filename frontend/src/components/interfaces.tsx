@@ -25,7 +25,7 @@ export type DepositPropsT = {
   state: IState;
   onSubmit: (vals: DepositValsT) => void;
 };
-
+  
 export type WithdrawValsT = {
   betId: string;
   isBettor1: boolean;
@@ -36,6 +36,17 @@ export type WithdrawValsT = {
 export type WithdrawPropsT = {
   state: IState;
   onSubmit: (vals: WithdrawValsT) => void;
+};
+
+export type JudgeValsT = {
+  betId: string;
+  isJudge: boolean;
+  winner: 0 | 1 | 2
+};
+
+export type JudgePropsT = {
+  state: IState;
+  onSubmit: (vals: JudgeValsT) => void;
 };
 
 export const SelectBetFormInitVals = {

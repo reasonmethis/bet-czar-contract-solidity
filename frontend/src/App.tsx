@@ -21,24 +21,18 @@ import { Home } from "./components/Home";
 import {
   CreateBetFormValsT,
   DepositValsT,
+  JudgeValsT,
   WithdrawValsT,
 } from "./components/interfaces";
+import { Judge } from "./components/Judge";
 import { Withdraw } from "./components/Withdraw";
+
+// Import various constants and settings, incl supported networks
+import * as cfg from "./constants";
 
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "./contracts/BetCzar.json";
 import contractAddress from "./contracts/contract-address.json";
-
-const DT_POLLING_IN_MS = 20000;
-const DUR_SNACKBAR = 15000;
-// This is the Hardhat Network id that we set in our hardhat.config.js.
-// Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
-// to use when deploying to other networks.
-const HARDHAT_NETWORK_ID = "1337";
-
-// This is an error code that indicates that the user canceled a transaction
-const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
-const ERR_ST_TX_REJECTED_BY_USER = "Transaction was rejected by user";
 
 declare let window: any; //without this Typescript complains that window doesn't have
 //attr ethereum. There are probably better approaches (maybe ones in https://stackoverflow.com/questions/70961190/property-ethereum-does-not-exist-on-type-window-typeof-globalthis-error), but
@@ -114,14 +108,21 @@ function App() {
     dispatchState({ type: Action.SET_ALL_BETS, payload: events });
   };
 
-  // This method checks if Metamask selected network is Localhost:8545
+  // Check if we are on a supported network
   const checkNetwork = () => {
-    if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) {
-      return true;
-    }
+    console.log("network:", window.ethereum.networkVersion);
+    //generateNewPrivateKey()
+    const network = cfg.supportedNetworks.find(
+      (obj) => obj.id === window.ethereum.networkVersion
+    );
+    console.log(typeof  window.ethereum.networkVersion);
+    if (network) return true;
+
+    const names = cfg.supportedNetworks.map(obj => obj.name).join(", ")
+    alert(`Please switch to one of the supported networks: ${names}`)
     dispatchState({
       type: Action.SET_NETWORK_ERR,
-      payload: "Please connect Metamask to Localhost:8545",
+      payload: `Please switch to one of the supported networks: ${names}`
     });
     return false;
   };
@@ -161,7 +162,7 @@ function App() {
     console.log("setting interval");
     pollDataIntervalRef.current = setInterval(() => {
       setFetchingFlg(true);
-    }, DT_POLLING_IN_MS);
+    }, cfg.DT_POLLING_IN_MS);
     // We run it once immediately so we don't have to wait for it
     setFetchingFlg(true);
   };
@@ -178,10 +179,11 @@ function App() {
 
     // To connect to the user's wallet, we have to run this method.
     // It returns a promise that will resolve to the user's address.
+    console.log("connecting wallet");
     const [selectedAddress] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-
+    console.log(selectedAddress);
     // Once we have the address, we can initialize the application.
 
     // First we check the network (that we are connected to Hardhat network)
@@ -262,6 +264,14 @@ function App() {
     if (vals.isBettor1) return betCzar.sendRefund1(+vals.betId);
     return betCzar.sendRefund2(+vals.betId);
   };
+  const makeJudgeTxPromise = (
+    vals: JudgeValsT
+  ): Promise<ethers.providers.TransactionResponse> => {
+    // We initialize the contract using the provider and the token's artifact.
+    const betCzar = getContractInstance();
+    if (vals.isJudge) return betCzar.adjudicate(+vals.betId, vals.winner);
+    return betCzar.forfeit(+vals.betId);
+  };
 
   const sendTx = async (
     txPromise: Promise<ethers.providers.TransactionResponse>
@@ -289,7 +299,7 @@ function App() {
       const tx = await txPromise;
       const hashShort = shortenHash(tx.hash);
       enqueueSnackbar(`Tx ${hashShort} processing`, {
-        autoHideDuration: DUR_SNACKBAR,
+        autoHideDuration: cfg.DUR_SNACKBAR,
       });
       console.log(tx.hash);
       dispatchState({ type: Action.SET_TX_BEINGSENT, payload: tx.hash });
@@ -304,7 +314,7 @@ function App() {
         // We can't know the exact error that made the transaction fail when it
         // was mined, so we throw this generic one.
         enqueueSnackbar(`Tx ${hashShort} failed`, {
-          autoHideDuration: DUR_SNACKBAR,
+          autoHideDuration: cfg.DUR_SNACKBAR,
           variant: "error",
         });
         throw new Error("Transaction failed");
@@ -313,7 +323,7 @@ function App() {
       // If we got here, the transaction was successful, so you may want to
       // update your state.
       enqueueSnackbar(`Tx ${hashShort} complete`, {
-        autoHideDuration: DUR_SNACKBAR,
+        autoHideDuration: cfg.DUR_SNACKBAR,
         variant: "success",
       });
       console.log("Tx successful");
@@ -321,7 +331,7 @@ function App() {
       // We check the error code to see if this error was produced because the
       // user rejected a tx. If that's the case, we do nothing.
       const errSt = getRpcErrorMessage(error);
-      if (errSt === ERR_ST_TX_REJECTED_BY_USER) return;
+      if (errSt === cfg.ERR_ST_TX_REJECTED_BY_USER) return;
       // Other errors are logged and stored in the Dapp's state. This is used to
       // show them to the user, and for debugging.
       console.error(error);
@@ -338,8 +348,8 @@ function App() {
   // This is an utility method that turns an RPC error into a human readable
   // message.
   const getRpcErrorMessage = (error: any): string => {
-    if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
-      return ERR_ST_TX_REJECTED_BY_USER;
+    if (error.code === cfg.ERROR_CODE_TX_REJECTED_BY_USER) {
+      return cfg.ERR_ST_TX_REJECTED_BY_USER;
     }
     if (error.data) {
       return error.data.message;
@@ -392,10 +402,10 @@ function App() {
         <Route
           path="judge"
           element={
-            <Deposit
+            <Judge
               state={state}
               onSubmit={(vals) => {
-                sendTx(makeDepositTxPromise(vals));
+                sendTx(makeJudgeTxPromise(vals));
               }}
             />
           }

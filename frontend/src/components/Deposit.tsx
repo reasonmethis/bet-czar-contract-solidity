@@ -14,6 +14,7 @@ import {
 } from "./interfaces";
 import { fetchBetInfo } from "./operations";
 import { SelectBetForm } from "./SelectBetForm";
+import { PageHeading } from "./PageHeading";
 
 const statusTypographyvariant = "subtitle2";
 
@@ -87,7 +88,7 @@ export const Deposit = (props: DepositPropsT) => {
     rebuilt, which then caused the previous version of SelectBetForm to completely
     unmount and the new one to mount, and React wasn't able to see that they are the 
     same. Or something to that effect 
-    */}
+    */}<PageHeading text="Deposits"></PageHeading>
       <SelectBetForm
         isDisabled={!props.state.address}
         onSubmit={(vals) => {

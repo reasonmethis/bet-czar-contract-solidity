@@ -10,6 +10,7 @@ import {
   CreateBetFormPropsT,
   CreateBetFormValsT,
 } from "./interfaces";
+import { PageHeading } from "./PageHeading";
 //import * as Yup from 'yup';
 
 const validate = (
@@ -57,7 +58,8 @@ export const CreateBetForm = (props: CreateBetFormPropsT) => {
   /*Seems to work without specifying type.
   Also, is this the right type? 
   See resetForm entry in https://formik.org/docs/api/formik#onsubmit-values-values-formikbag-formikbag--void--promiseany */
-  return (
+  return (<>
+    <PageHeading text="New Bet Creation"></PageHeading>
     <Formik<CreateBetFormValsT>
       initialValues={CreateBetFormInitVals}
       validate={validate}
@@ -190,6 +192,6 @@ export const CreateBetForm = (props: CreateBetFormPropsT) => {
           </Stack>
         </form>
       )}
-    </Formik>
+    </Formik></>
   );
 };

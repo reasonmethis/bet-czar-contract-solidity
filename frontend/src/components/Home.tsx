@@ -7,6 +7,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import { IState } from "../StateReducer";
+import { PageHeading } from "./PageHeading";
 
 interface HomeLoaderData {
   date: string;
@@ -109,9 +110,11 @@ export const Home = ({ state }: HomePropsT) => {
   //let data = useLoaderData() as HomeLoaderData;
   return (
     <>
-      {/* <Typography variant="h5">Dashboard</Typography> */}
+      <PageHeading text="Dashboard"></PageHeading>
       {!state.address ? (
-        <Typography variant="subtitle1">Please connect your wallet</Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          Once you are connected, you will see all of your bets here.
+        </Typography>
       ) : (
         <>
           <Typography variant="subtitle1" gutterBottom>
