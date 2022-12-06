@@ -2,7 +2,7 @@
 import { ethers } from "ethers";
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "../contracts/BetCzar.json";
-import contractAddress from "../contracts/contract-address.json";
+
 import {
   betInfoInitVals,
   BetStatus,
@@ -10,8 +10,8 @@ import {
   RpcCallErrorT,
 } from "./interfaces";
 
-const getReadContractInstance = (provider: ethers.providers.Web3Provider) =>
-  new ethers.Contract(contractAddress.BetCzar, BetCzarArtifact.abi, provider);
+const getReadContractInstance = (provider: ethers.providers.Web3Provider, contractAddress: string) =>
+  new ethers.Contract(contractAddress, BetCzarArtifact.abi, provider);
 
 // This is an utility method that turns an RPC error into a human readable
 // message.
@@ -32,14 +32,15 @@ const parseRpcCallError = (error: any): RpcCallErrorT => {
 
 export const fetchBetInfo = async (
   betId: number,
-  provider: ethers.providers.Web3Provider | undefined
+  provider: ethers.providers.Web3Provider | undefined,
+  contractAddress: string | undefined
 ) => {
   //let betInfo = BetInfoInitVals; //PITFALL - this, in combination with the
   //next several lines, would modify BetInfoInitVals. Setting its type to readonly
   //helps catch this at compile time
   const betInfo = { ...betInfoInitVals }; //see above
   try {
-    const betCzar = getReadContractInstance(provider!);
+    const betCzar = getReadContractInstance(provider!, contractAddress!);
     const res = await betCzar.bets(betId);
     //we extract the info and populate betInfo
     betInfo.betId = betId.toString();

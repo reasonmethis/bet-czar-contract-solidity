@@ -6,15 +6,15 @@ import Typography from "@mui/material/Typography";
 
 import { ethers } from "ethers";
 import {
-    betInfoInitVals,
-    BetStatus,
-    betStatusDescriptions,
-    DepositPropsT,
-    RpcCallErrorStatus
+  betInfoInitVals,
+  BetStatus,
+  betStatusDescriptions,
+  DepositPropsT,
+  RpcCallErrorStatus,
 } from "./interfaces";
 import { fetchBetInfo } from "./operations";
-import { SelectBetForm } from "./SelectBetForm";
 import { PageHeading } from "./PageHeading";
+import { SelectBetForm } from "./SelectBetForm";
 
 const statusTypographyvariant = "subtitle2";
 
@@ -27,16 +27,20 @@ export const Deposit = (props: DepositPropsT) => {
   const [betId, setBetId] = useState(-1);
 
   useEffect(() => {
-    console.log("tx: ",props.state.txBeingSent);
-    if (props.state.txBeingSent || betId < 0) return
-    //if txbeingsent changed from something to nothing then maybe 
+    console.log("tx: ", props.state.txBeingSent);
+    if (props.state.txBeingSent || betId < 0) return;
+    //if txbeingsent changed from something to nothing then maybe
     //the bet status changed, so refetch
     const func = async () => {
-        const newBetInfo = await fetchBetInfo(betId, props.state.provider)
-        setBetInfo({ ...newBetInfo });
-    }
-    func()
-  }, [props.state.txBeingSent])
+      const newBetInfo = await fetchBetInfo(
+        betId,
+        props.state.provider,
+        props.state.contractAddress
+      );
+      setBetInfo({ ...newBetInfo });
+    };
+    func();
+  }, [props.state.txBeingSent]);
 
   useEffect(() => {
     setBetInfo({ ...betInfoInitVals });
@@ -88,7 +92,8 @@ export const Deposit = (props: DepositPropsT) => {
     rebuilt, which then caused the previous version of SelectBetForm to completely
     unmount and the new one to mount, and React wasn't able to see that they are the 
     same. Or something to that effect 
-    */}<PageHeading text="Deposits"></PageHeading>
+    */}
+      <PageHeading text="Deposits"></PageHeading>
       <SelectBetForm
         isDisabled={!props.state.address}
         onSubmit={(vals) => {
@@ -96,7 +101,8 @@ export const Deposit = (props: DepositPropsT) => {
           const func = async () => {
             const newBetInfo = await fetchBetInfo(
               +vals.betId,
-              props.state.provider
+              props.state.provider,
+              props.state.contractAddress
             );
             // PITFALL - have to use the spread operator because otherwise it doesn't rerender
             // it looks like the above call always returns the same reference - that would explain

@@ -32,7 +32,7 @@ import * as cfg from "./constants";
 
 // We import the contract's artifacts and address here
 import BetCzarArtifact from "./contracts/BetCzar.json";
-import contractAddress from "./contracts/contract-address.json";
+//import contractAddress from "./contracts/contract-address.json";
 
 declare let window: any; //without this Typescript complains that window doesn't have
 //attr ethereum. There are probably better approaches (maybe ones in https://stackoverflow.com/questions/70961190/property-ethereum-does-not-exist-on-type-window-typeof-globalthis-error), but
@@ -111,34 +111,41 @@ function App() {
   // Check if we are on a supported network
   const checkNetwork = () => {
     console.log("network:", window.ethereum.networkVersion);
-    //generateNewPrivateKey()
+
     const network = cfg.supportedNetworks.find(
       (obj) => obj.id === window.ethereum.networkVersion
     );
-    console.log(typeof  window.ethereum.networkVersion);
-    if (network) return true;
+    if (network) {
+      console.log("setting contract address ", network.contractAddress);
+      dispatchState({
+        type: Action.SET_CONTRACT,
+        payload: network.contractAddress,
+      });
+      return true;
+    }
 
-    const names = cfg.supportedNetworks.map(obj => obj.name).join(", ")
-    alert(`Please switch to one of the supported networks: ${names}`)
+    const names = cfg.supportedNetworks.map((obj) => obj.name).join(", ");
+    alert(`Please switch to one of the supported networks: ${names}`);
     dispatchState({
       type: Action.SET_NETWORK_ERR,
-      payload: `Please switch to one of the supported networks: ${names}`
+      payload: `Please switch to one of the supported networks: ${names}`,
     });
     return false;
   };
 
   const initialize = (userAddress: string) => {
     console.log(`Initializing addr ${userAddress}`);
-    // This method initializes the dapp
 
-    // We first store the user's address in the component's state
+    if (!checkNetwork()) {
+      return;
+    }
+
+    // We store the user's address
     dispatchState({ type: Action.SET_ADDRESS, payload: userAddress });
 
     // Then, we initialize ethers, fetch the token's data, and start polling
     // for the user's balance.
 
-    // Fetching the token data and the user's balance are specific to this
-    // sample project, but you can reuse the same initialization pattern.
     // We first initialize ethers by creating a provider using window.ethereum
 
     //TODO: THIS DOESN'T DEPEND ON USER'S ADDRESS, ONLY ON THE EXISTENCE OF THE
@@ -186,10 +193,6 @@ function App() {
     console.log(selectedAddress);
     // Once we have the address, we can initialize the application.
 
-    // First we check the network (that we are connected to Hardhat network)
-    if (!checkNetwork()) {
-      return;
-    }
     initialize(selectedAddress);
 
     // We reinitialize it whenever the user changes their account.
@@ -222,7 +225,7 @@ function App() {
 
   const getContractInstance = () =>
     new ethers.Contract(
-      contractAddress.BetCzar,
+      state.contractAddress!,
       BetCzarArtifact.abi,
       state.provider!.getSigner()
     );

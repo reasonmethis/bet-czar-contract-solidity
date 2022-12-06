@@ -14,9 +14,9 @@ async function main() {
         " option '--network localhost'"
     );
   } else {
-    console.warn(`Will deploy the contract to the ${network.name} network`);
+    console.warn(`Will deploy the contract to the ${network.name} network`)
   }
-  console.log("blocknumber: ", await ethers.provider.getBlockNumber());
+/*console.log("blocknumber: ", await ethers.provider.getBlockNumber());
   // ethers is available in the global scope
   const [deployer] = await ethers.getSigners();
   console.log(
@@ -24,7 +24,7 @@ async function main() {
     await deployer.getAddress()
   );
 
-  console.log("Account balance:", (await deployer.getBalance()).toString());
+  console.log("Account balance:", (await deployer.getBalance()).toString());*/
 
   console.log("Getting contract factory for BetCzar...");
   const BetCzar = await ethers.getContractFactory("BetCzar");

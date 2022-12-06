@@ -6,6 +6,7 @@ export enum Action {
   SET_NETWORK_ERR,
   SET_PROVIDER,
   SET_ADDRESS,
+  SET_CONTRACT,
   SET_BALANCE,
   SET_TX_BEINGSENT,
   SET_TX_ERR,
@@ -24,6 +25,7 @@ type TActionSetStringProperty = {
   type:
     | Action.SET_NETWORK_ERR
     | Action.SET_ADDRESS
+    | Action.SET_CONTRACT
     | Action.SET_BALANCE
     | Action.SET_TX_BEINGSENT
     | Action.SET_TX_ERR;
@@ -53,6 +55,7 @@ export type TAction =
 export interface IState {
   balance: string | undefined;
   address: string | undefined;
+  contractAddress: string | undefined;
   networkError: string | undefined;
   provider: ethers.providers.Web3Provider | undefined;
   txBeingSent: string | undefined;
@@ -63,6 +66,7 @@ export interface IState {
 export const stateInit: IState = {
   balance: undefined,
   address: undefined,
+  contractAddress: undefined,
   networkError: undefined,
   provider: undefined,
   txBeingSent: undefined,
@@ -77,11 +81,11 @@ export const stateReducer = (state: IState, action: TAction): IState => {
     case Action.SET_NETWORK_ERR:
       return { ...state, networkError: action.payload };
     case Action.SET_PROVIDER:
-      console.log("statereducer prov", !!action.payload);
       return { ...state, provider: action.payload };
     case Action.SET_ADDRESS:
-      console.log("statereducer addr", !!action.payload);
       return { ...state, address: action.payload };
+    case Action.SET_CONTRACT:
+      return { ...state, contractAddress: action.payload };
     case Action.SET_BALANCE:
       return { ...state, balance: action.payload };
     case Action.SET_TX_BEINGSENT:

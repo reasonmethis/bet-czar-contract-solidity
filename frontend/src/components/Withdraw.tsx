@@ -34,7 +34,11 @@ export const Withdraw = (props: WithdrawPropsT) => {
     //if txbeingsent changed from something to nothing then maybe
     //the bet status changed, so refetch
     const func = async () => {
-      const newBetInfo = await fetchBetInfo(betId, props.state.provider);
+      const newBetInfo = await fetchBetInfo(
+        betId,
+        props.state.provider,
+        props.state.contractAddress
+      );
       setBetInfo({ ...newBetInfo });
     };
     func();
@@ -142,7 +146,8 @@ export const Withdraw = (props: WithdrawPropsT) => {
           const func = async () => {
             const newBetInfo = await fetchBetInfo(
               +vals.betId,
-              props.state.provider
+              props.state.provider,
+              props.state.contractAddress
             );
             // PITFALL - have to use the spread operator because otherwise it doesn't rerender
             // it looks like the above call always returns the same reference - that would explain
