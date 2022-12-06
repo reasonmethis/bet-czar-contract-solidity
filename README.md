@@ -22,9 +22,10 @@ The function of the judge is to decide the outcome: bettor 1 wins, bettor 2 wins
 ## Usage
 
 There are a few ways to test it out:
-1. Using the front-end, here's a [working demo]. In that case, you will need the Metamask wallet. Then do one of the following:
- * **Least technical way.** Connect to a supported network (currently only the Goerli testnet is supported - you can get free Goerli ETH from [this POW faucet](https://goerli-faucet.pk910.de/))
- * **Alternative way.** Run a local Hardhat node and connect your Metamask to localhost:8545. This of course requires familiarity with Hardhat.
+1. Using the front-end. Here's a [working demo]. To use it, you will need the Metamask wallet. Then do one of the following:
+
+   * **Least technical way.** Connect Metamask to a supported network (currently only the Goerli testnet is supported), then get yourself some free test ETH tokens. You can quickly collect 0.01ETH or so from the [Goerli POW faucet](https://goerli-faucet.pk910.de/) (there are other commonly used faucets but they require you to make a Twitter post or sign up for an Alchemy account).
+   * Alternative way. Run a local Hardhat node and connect your Metamask to localhost:8545. This of course requires familiarity with Hardhat.
 2. Without using the front-end. In that case, you only need the file BetCzar.sol. Copy its contents into a fresh project on [Remix IDE](https://remix.ethereum.org) (or some other similar environment), and it will let you interact with it using test accounts. 
 
 [working demo]: https://reasonmethis.github.io/betczar_frontend
