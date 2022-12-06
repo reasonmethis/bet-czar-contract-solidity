@@ -1,6 +1,6 @@
 # BetCzar
 
-This Hardhat project contains BetCzar, a Solidity contract that allows anyone to create and manage bets between two parties. 
+This Hardhat project contains BetCzar, a Solidity contract that allows anyone to create and manage bets between two parties. I have also made a front-end app to interact with this contract: [working demo](https://reasonmethis.github.io/betczar_frontend)
 
 ## Introduction
 
