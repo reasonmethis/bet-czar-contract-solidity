@@ -28,4 +28,4 @@ There are a few ways to test it out:
    * Alternative way. Run a local Hardhat node and connect your Metamask to localhost:8545. This of course requires familiarity with Hardhat.
 2. Without using the frontend. In that case, you only need the file BetCzar.sol. Copy its contents into a fresh project on [Remix IDE](https://remix.ethereum.org) (or some other similar environment), and it will let you interact with it using test accounts. 
 
-[working demo]: https://reasonmethis.github.io/betczar_frontend
+[working demo]: https://reasonmethis.github.io/bet-czar-frontend/
