@@ -28,4 +28,12 @@ There are a few ways to test it out:
    * Alternative way. Run a local Hardhat node and connect your Metamask to localhost:8545. This of course requires familiarity with Hardhat.
 2. Without using the frontend. In that case, you only need the file BetCzar.sol. Copy its contents into a fresh project on [Remix IDE](https://remix.ethereum.org) (or some other similar environment), and it will let you interact with it using test accounts. 
 
+## Technical Notes on Implementation 
+
+### Security 
+
+The contract protects against a re-entrancy attack by always updating state in storage **before** sending funds to a user. It also protects against one bettor blocking the other bettor from withdrawing funds (in the case of a tie/annullment) by having two separate withdrawal functions, each of which sends funds to only one bettor. By contrast, if there was just one withdrawal function that attempted to send funds to both bettors, then one bettor could "refuse" accepting payment, thus reverting the whole process and preventing both themselves and the other bettor from receiving funds. 
+
+The contract does not use delegated calls, pseudo-random numbers, critical dependence on the order of operations, special privileges for the owner, passwords, or operations that can cause underflow or overflow, so known vulnerabilities based on these are not an issue.
+
 [working demo]: https://reasonmethis.github.io/bet-czar-frontend/
