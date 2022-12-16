@@ -37,3 +37,20 @@ The contract protects against a re-entrancy attack by always updating state in s
 The contract does not use delegated calls, pseudo-random numbers, critical dependence on the order of operations, special privileges for the owner, passwords, or operations that can cause underflow or overflow, so known vulnerabilities based on these are not an issue.
 
 [working demo]: https://reasonmethis.github.io/bet-czar-frontend/
+
+### Being mindful of gas costs
+
+To save on gas, I strived to minimize storage reads and writes, as well as the number of operations the EVM would need to perform for a given task, which sometimes came at the cost of having very similar pieces of code. Here are some examples:
+
+1. Using custom errors: 
+https://github.com/reasonmethis/bet-czar-contract-solidity/blob/master/contracts/BetCzar.sol#L31
+
+2. Reading the Bet of interest first into memory so I don't query its various properties multiple times from storage, e.g.:
+https://github.com/reasonmethis/bet-czar-contract-solidity/blob/master/contracts/BetCzar.sol#L62
+
+3. Putting up with code repetition to avoid creating additional structures, function calls, comparisons, e.g.:
+https://github.com/reasonmethis/bet-czar-contract-solidity/blob/master/contracts/BetCzar.sol#L75
+https://github.com/reasonmethis/bet-czar-contract-solidity/blob/master/contracts/BetCzar.sol#L257
+
+and other places. Of course the tradeoff is that code repetition increases deployment cost, but that wouldn't affect the users.
+
